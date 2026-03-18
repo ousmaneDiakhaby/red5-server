@@ -120,6 +120,7 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                 }
                 int remaining;
                 int iterations = 0;
+                int consecutiveUnknownTypes = 0;
                 final int maxIterations = buffer.remaining() + 1;
                 while ((remaining = buffer.remaining()) > 0) {
                     if (++iterations > maxIterations) {
@@ -148,6 +149,17 @@ public class RTMPProtocolDecoder implements Constants, IEventDecoder {
                         //log.trace("Has decoded object");
                         if (decodedObject != null) {
                             result.add(decodedObject);
+                            // detect chunk stream desynchronization via repeated unknown data types
+                            if (decodedObject instanceof Packet) {
+                                byte dataType = ((Packet) decodedObject).getHeader().getDataType();
+                                if (dataType < TYPE_CHUNK_SIZE || dataType > TYPE_AGGREGATE) {
+                                    if (++consecutiveUnknownTypes >= 3) {
+                                        throw new ProtocolException("Chunk stream desynchronization detected: " + consecutiveUnknownTypes + " consecutive unknown data types (last: 0x" + String.format("%02X", dataType) + ")");
+                                    }
+                                } else {
+                                    consecutiveUnknownTypes = 0;
+                                }
+                            }
                         }
                     } else if (state.canContinueDecoding()) {
                         //log.trace("Can continue decoding");
