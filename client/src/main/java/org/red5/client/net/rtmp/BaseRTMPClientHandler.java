@@ -209,7 +209,7 @@ public abstract class BaseRTMPClientHandler extends BaseRTMPHandler implements I
         params.put("objectEncoding", Integer.valueOf(0));
         params.put("fpad", Boolean.FALSE);
         params.put("audioCodecs", Integer.valueOf(0x0FFF)); // old value 3575 = 0x0E0F
-        params.put("videoFunction", Integer.valueOf(1));
+        params.put("videoFunction", Integer.valueOf(org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_SEEK | org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_HDR | org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_VIDEO_PACKET_TYPE_METADATA));
         params.put("pageUrl", null);
         params.put("path", application);
         params.put("capabilities", Integer.valueOf(15));
