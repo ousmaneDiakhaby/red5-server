@@ -226,6 +226,29 @@ public class AbstractVideo implements IVideoStreamCodec {
                         data.rewind();
                         return false;
                     }
+                    // ModEx unwrap loop: peel off modifier layers until a non-ModEx packet type is reached
+                    while (packetType == VideoPacketType.ModEx) {
+                        // Determine the size of the ModEx data (UI8 + 1, range 1-256)
+                        int modExDataSize = (data.get() & 0xff) + 1;
+                        // If maximum 8-bit size (256), use 16-bit value instead
+                        if (modExDataSize == 256) {
+                            modExDataSize = ((data.get() & 0xff) << 8 | (data.get() & 0xff)) + 1;
+                        }
+                        // Read the ModEx data
+                        byte[] modExData = new byte[modExDataSize];
+                        data.get(modExData);
+                        // Next byte: upper nibble = ModExType, lower nibble = updated PacketType
+                        ByteNibbler modExNibbler = new ByteNibbler(data.get());
+                        VideoPacketModExType modExType = VideoPacketModExType.valueOf(modExNibbler.nibble(4));
+                        packetType = VideoPacketType.valueOf(modExNibbler.nibble(4));
+                        if (modExType == VideoPacketModExType.TimestampOffsetNano && modExData.length >= 3) {
+                            // UI24 nanosecond offset within the current millisecond
+                            int nanoOffset = (modExData[0] & 0xff) << 16 | (modExData[1] & 0xff) << 8 | (modExData[2] & 0xff);
+                            if (isTrace) {
+                                log.trace("ModEx TimestampOffsetNano: {} ns", nanoOffset);
+                            }
+                        }
+                    }
                 }
                 if (isTrace)
                     log.trace("Multitrack: {} multitrackType: {} packetType: {}", multitrack, multitrackType, packetType);
