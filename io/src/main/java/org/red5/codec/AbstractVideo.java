@@ -323,6 +323,12 @@ public class AbstractVideo implements IVideoStreamCodec {
             // Using rewind because mark might not be valid after calling sub classes.
             data.rewind();
         }
+        if (!result && data != null && data.hasRemaining()) {
+            byte[] peek = new byte[Math.min(8, data.remaining())];
+            data.get(peek);
+            data.rewind();
+            log.warn("AbstractVideo rejected - codec: {} first bytes: {} enhanced: {} frameType: {} packetType: {} class: {}", codec, ByteNibbler.toHexString(peek), enhanced, frameType, packetType, getClass().getSimpleName());
+        }
         return result;
     }
 

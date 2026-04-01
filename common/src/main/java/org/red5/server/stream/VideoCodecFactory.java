@@ -68,7 +68,11 @@ public class VideoCodecFactory {
                 if (result.addData(data)) {
                     log.debug("Codec {} accepted data", result);
                 } else {
-                    log.warn("Codec {} rejected data", codec);
+                    data.rewind();
+                    byte[] peek = new byte[Math.min(8, data.remaining())];
+                    data.get(peek);
+                    data.rewind();
+                    log.warn("Codec {} rejected data, flag: 0x{}, enhanced: {}, first bytes: {}", codec, String.format("%02x", c), enhanced, ByteNibbler.toHexString(peek));
                     result = null;
                 }
             } else {

@@ -264,6 +264,12 @@ public class AVCVideo extends AbstractVideo {
         }
         // reset the position
         data.rewind();
+        if (!result) {
+            byte[] peek = new byte[Math.min(8, data.remaining())];
+            data.get(peek);
+            data.rewind();
+            log.warn("AVC rejected - first bytes: {} enhanced: {} frameType: {} packetType: {}", ByteNibbler.toHexString(peek), enhanced, frameType, packetType);
+        }
         return result;
     }
 
