@@ -150,8 +150,8 @@ public class StreamService implements IStreamService {
     }
 
     /** {@inheritDoc} */
-    public void initStream(Number streamId, Object idk) {
-        log.info("initStream parameter #2: {}", idk);
+    public void initStream(Number streamId, Object extraParams) {
+        log.info("initStream extra parameters: {}", extraParams);
         initStream(streamId);
     }
 
