@@ -40,20 +40,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class Red5 {
 
-    private static Logger log = LoggerFactory.getLogger(Red5.class);
-
-    private static boolean isDebug = log.isDebugEnabled();
-
-    /**
-     * Connection associated with the current thread. Each connection runs in a separate thread.
-     */
-    private static final ThreadLocal<WeakReference<IConnection>> connThreadLocal = new ThreadLocal<WeakReference<IConnection>>();
-
-    /**
-     * Connection local to the current thread
-     */
-    public IConnection conn;
-
+    // 1. public static final fields
     /**
      * Server version with revision
      */
@@ -70,12 +57,6 @@ public final class Red5 {
     public static final Integer CAPABILITIES = Integer.valueOf(33);
 
     /**
-     * Target for ChunkSize messaging in RTMP. Defaulting to 128 which is the original FMS setting, until modifying this is more
-     * throughly tested.
-     */
-    public static int targetChunkSize = 128;
-
-    /**
      * Data version for NetStatusEvents
      */
     @SuppressWarnings("serial")
@@ -86,10 +67,28 @@ public final class Red5 {
         }
     };
 
+    // 2. private static final fields
+    private static final Logger log = LoggerFactory.getLogger(Red5.class);
+
+    /**
+     * Connection associated with the current thread. Each connection runs in a separate thread.
+     */
+    private static final ThreadLocal<WeakReference<IConnection>> connThreadLocal = new ThreadLocal<WeakReference<IConnection>>();
+
     /**
      * Server start time
      */
     private static final long START_TIME = System.currentTimeMillis();
+
+    // 3. public static fields
+    /**
+     * Target for ChunkSize messaging in RTMP. Defaulting to 128 which is the original FMS setting, until modifying this is more
+     * throughly tested.
+     */
+    public static int targetChunkSize = 128;
+
+    // 4. private static fields
+    private static boolean isDebug = log.isDebugEnabled();
 
     /**
      * Detection of debug mode
@@ -101,6 +100,13 @@ public final class Red5 {
      */
     private static boolean pluginsReady;
 
+    // 5. public instance fields
+    /**
+     * Connection local to the current thread
+     */
+    public IConnection conn;
+
+    // 6. Constructors
     /**
      * Create a new Red5 object using given connection.
      *
