@@ -320,6 +320,29 @@ public class MultiThreadedApplicationAdapter extends StatefulScopeWrappingAdapte
         }
         log.debug("start: {}", scope);
         //setup plug-ins
+        setupPlugins(scope);
+        boolean started = false;
+        // verify that we can start
+        if (super.start(scope)) {
+            if (ScopeUtils.isApp(scope)) {
+                started = appStart(scope);
+            } else if (ScopeUtils.isRoom(scope)) {
+                started = roomStart(scope);
+            } else {
+                log.warn("Scope wasn't of app or room type, it was not started");
+            }
+            // fix for issue 91
+            if (started) {
+                // we dont allow connections until we are started
+                super.setCanConnect(true);
+                // we also dont allow service calls until started
+                super.setCanCallService(true);
+            }
+        }
+        return started;
+    }
+
+    private void setupPlugins(IScope scope) {
         log.trace("Plugins: {}", plugins);
         if (plugins != null) {
             for (PluginDescriptor desc : plugins) {
@@ -372,25 +395,6 @@ public class MultiThreadedApplicationAdapter extends StatefulScopeWrappingAdapte
                 }
             }
         }
-        boolean started = false;
-        // verify that we can start
-        if (super.start(scope)) {
-            if (ScopeUtils.isApp(scope)) {
-                started = appStart(scope);
-            } else if (ScopeUtils.isRoom(scope)) {
-                started = roomStart(scope);
-            } else {
-                log.warn("Scope wasn't of app or room type, it was not started");
-            }
-            // fix for issue 91
-            if (started) {
-                // we dont allow connections until we are started
-                super.setCanConnect(true);
-                // we also dont allow service calls until started
-                super.setCanCallService(true);
-            }
-        }
-        return started;
     }
 
     /**
