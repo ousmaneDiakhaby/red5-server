@@ -1544,13 +1544,6 @@ public abstract class RTMPConnection extends BaseConnection implements IStreamCa
         updateBytesRead();
     }
 
-    @SuppressWarnings("unused")
-    private String getMessageType(Packet packet) {
-        final Header header = packet.getHeader();
-        final byte headerDataType = header.getDataType();
-        return messageTypeToName(headerDataType);
-    }
-
     /**
      * <p>messageTypeToName.</p>
      *
