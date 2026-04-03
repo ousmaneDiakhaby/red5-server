@@ -206,14 +206,14 @@ public abstract class BaseRTMPClientHandler extends BaseRTMPHandler implements I
         params.put("flashVer", userAgent);
         params.put("tcUrl", String.format("%s://%s:%s/%s", protocol, server, port, application));
         //params.put("swfUrl", params.get("tcUrl"));
-        params.put("objectEncoding", Integer.valueOf(0));
+        params.put("objectEncoding", DEFAULT_OBJECT_ENCODING);
         params.put("fpad", Boolean.FALSE);
-        params.put("audioCodecs", Integer.valueOf(0x0FFF)); // old value 3575 = 0x0E0F
+        params.put("audioCodecs", DEFAULT_AUDIO_CODECS); // old value 3575 = 0x0E0F
         params.put("videoFunction", Integer.valueOf(org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_SEEK | org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_HDR | org.red5.codec.VideoFunctionFlag.SUPPORT_VID_CLIENT_VIDEO_PACKET_TYPE_METADATA));
         params.put("pageUrl", null);
         params.put("path", application);
-        params.put("capabilities", Integer.valueOf(15));
-        params.put("videoCodecs", Integer.valueOf(0x00FF)); // old value 252 = 0x0FC
+        params.put("capabilities", DEFAULT_CAPABILITIES);
+        params.put("videoCodecs", DEFAULT_VIDEO_CODECS); // old value 252 = 0x0FC
         params.put("audioFourCcInfoMap", Collections.singletonMap("*", Integer.valueOf(4)));
         params.put("videoFourCcInfoMap", Collections.singletonMap("*", Integer.valueOf(4)));
         return params;
@@ -1159,6 +1159,24 @@ public abstract class BaseRTMPClientHandler extends BaseRTMPHandler implements I
 
         NetStreamPrivateData(int streamId) {
             this.streamId = streamId;
+            if (streamEventHandler != null) {
+                handler = streamEventHandler;
+            }
+        }
+
+        public int getStreamId() {
+            return streamId;
+        }
+
+        @Override
+        public int hashCode() {
+            return streamId;
+        }
+
+    }
+
+}
+this.streamId = streamId;
             if (streamEventHandler != null) {
                 handler = streamEventHandler;
             }
