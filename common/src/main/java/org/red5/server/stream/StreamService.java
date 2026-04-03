@@ -97,9 +97,10 @@ public class StreamService implements IStreamService {
                 return streamId;
             } catch (IndexOutOfBoundsException e) {
                 log.error("Unable to create stream", e);
+                throw new IllegalStateException("Unable to reserve stream id", e);
             }
         }
-        return -1;
+        throw new IllegalStateException("Connection is not stream capable");
     }
 
     /** {@inheritDoc} */
@@ -119,9 +120,10 @@ public class StreamService implements IStreamService {
                 return streamId;
             } catch (IndexOutOfBoundsException e) {
                 log.error("Unable to create stream", e);
+                throw new IllegalStateException("Unable to reserve stream id " + streamId, e);
             }
         }
-        return -1;
+        throw new IllegalStateException("Connection is not stream capable");
     }
 
     /** {@inheritDoc} */
