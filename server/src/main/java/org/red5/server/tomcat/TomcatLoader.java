@@ -465,8 +465,7 @@ public class TomcatLoader extends LoaderBase implements InitializingBean, Dispos
             log.warn("An exception occurred during network configuration", ex);
         }
         // create an executor for "ordered" start-up of the webapps
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        try {
+        try (ExecutorService executor = Executors.newSingleThreadExecutor()) {
             log.info("Starting Tomcat servlet engine");
             embedded.start();
             // create references for later lookup
@@ -601,8 +600,6 @@ public class TomcatLoader extends LoaderBase implements InitializingBean, Dispos
                 log.error("Error loading tomcat", e);
             }
         } finally {
-            // finish-up with the executor
-            executor.shutdown();
             // do our jmx stuff
             registerJMX();
         }

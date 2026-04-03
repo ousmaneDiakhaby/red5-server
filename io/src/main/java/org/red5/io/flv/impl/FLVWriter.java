@@ -285,52 +285,52 @@ public class FLVWriter implements ITagWriter {
     private Map<String, ?> getMetaData(Path path, int maxTags) throws IOException {
         Map<String, ?> meta = null;
         // attempt to read the metadata
-        SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ);
-        long size = channel.size();
-        log.debug("Channel open: {} size: {} position: {}", channel.isOpen(), size, channel.position());
-        if (size > 0L) {
-            // skip flv signature 4b, flags 1b, data offset 4b (9b), prev tag size (4b)
-            channel.position(appendOffset);
-            // flv tag header size 11b
-            ByteBuffer dst = ByteBuffer.allocate(11);
-            do {
-                int read = channel.read(dst);
-                if (read > 0) {
-                    dst.flip();
-                    byte tagType = (byte) (dst.get() & 31); // 1
-                    int bodySize = IOUtils.readUnsignedMediumInt(dst); // 3
-                    int timestamp = IOUtils.readExtendedMediumInt(dst); // 4
-                    int streamId = IOUtils.readUnsignedMediumInt(dst); // 3
-                    log.debug("Data type: {} timestamp: {} stream id: {} body size: {}", new Object[] { tagType, timestamp, streamId, bodySize });
-                    if (tagType == ITag.TYPE_METADATA) {
-                        ByteBuffer buf = ByteBuffer.allocate(bodySize);
-                        read = channel.read(buf);
-                        if (read > 0) {
-                            buf.flip();
-                            // construct the meta
-                            IoBuffer ioBuf = IoBuffer.wrap(buf);
-                            Input input = new Input(ioBuf);
-                            String metaType = Deserializer.deserialize(input, String.class);
-                            log.debug("Metadata type: {}", metaType);
-                            meta = Deserializer.deserialize(input, Map.class);
-                            input = null;
-                            ioBuf.clear();
-                            ioBuf.free();
-                            if (meta.containsKey("duration")) {
-                                appendOffset = channel.position() + 4L;
-                                break;
+        try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ)) {
+            long size = channel.size();
+            log.debug("Channel open: {} size: {} position: {}", channel.isOpen(), size, channel.position());
+            if (size > 0L) {
+                // skip flv signature 4b, flags 1b, data offset 4b (9b), prev tag size (4b)
+                channel.position(appendOffset);
+                // flv tag header size 11b
+                ByteBuffer dst = ByteBuffer.allocate(11);
+                do {
+                    int read = channel.read(dst);
+                    if (read > 0) {
+                        dst.flip();
+                        byte tagType = (byte) (dst.get() & 31); // 1
+                        int bodySize = IOUtils.readUnsignedMediumInt(dst); // 3
+                        int timestamp = IOUtils.readExtendedMediumInt(dst); // 4
+                        int streamId = IOUtils.readUnsignedMediumInt(dst); // 3
+                        log.debug("Data type: {} timestamp: {} stream id: {} body size: {}", new Object[] { tagType, timestamp, streamId, bodySize });
+                        if (tagType == ITag.TYPE_METADATA) {
+                            ByteBuffer buf = ByteBuffer.allocate(bodySize);
+                            read = channel.read(buf);
+                            if (read > 0) {
+                                buf.flip();
+                                // construct the meta
+                                IoBuffer ioBuf = IoBuffer.wrap(buf);
+                                Input input = new Input(ioBuf);
+                                String metaType = Deserializer.deserialize(input, String.class);
+                                log.debug("Metadata type: {}", metaType);
+                                meta = Deserializer.deserialize(input, Map.class);
+                                input = null;
+                                ioBuf.clear();
+                                ioBuf.free();
+                                if (meta.containsKey("duration")) {
+                                    appendOffset = channel.position() + 4L;
+                                    break;
+                                }
                             }
+                            buf.compact();
                         }
-                        buf.compact();
+                        // advance beyond prev tag size
+                        channel.position(channel.position() + 4L);
+                        //int prevTagSize = dst.getInt(); // 4
+                        //log.debug("Previous tag size: {} {}", prevTagSize, (bodySize - 11));
+                        dst.compact();
                     }
-                    // advance beyond prev tag size
-                    channel.position(channel.position() + 4L);
-                    //int prevTagSize = dst.getInt(); // 4
-                    //log.debug("Previous tag size: {} {}", prevTagSize, (bodySize - 11));
-                    dst.compact();
-                }
-            } while (--maxTags > 0); // read up-to "max" tags looking for duration
-            channel.close();
+                } while (--maxTags > 0); // read up-to "max" tags looking for duration
+            }
         }
         return meta;
     }
@@ -894,31 +894,31 @@ public class FLVWriter implements ITagWriter {
                     Path prevFlv = Paths.get(filePath.replace(".flv", ".old"));
                     if (Files.exists(prevFlv)) {
                         log.debug("Found previous flv: {} offset: {}", prevFlv, appendOffset);
-                        SeekableByteChannel prevChannel = Files.newByteChannel(prevFlv, StandardOpenOption.READ);
-                        // skip the flv header, prev tag size, and possibly metadata
-                        prevChannel.position(appendOffset);
-                        int read = -1, wrote;
-                        boolean showfirsttag = true;
-                        do {
-                            read = prevChannel.read(dst);
-                            log.trace("Read: {} bytes", read);
-                            if (read > 0) {
-                                dst.flip();
-                                // inspect the byte to make sure its a valid type
-                                if (showfirsttag) {
-                                    showfirsttag = false;
-                                    dst.mark();
-                                    log.debug("Tag type: {}", (dst.get() & 31));
-                                    dst.reset();
+                        try (SeekableByteChannel prevChannel = Files.newByteChannel(prevFlv, StandardOpenOption.READ)) {
+                            // skip the flv header, prev tag size, and possibly metadata
+                            prevChannel.position(appendOffset);
+                            int read = -1, wrote;
+                            boolean showfirsttag = true;
+                            do {
+                                read = prevChannel.read(dst);
+                                log.trace("Read: {} bytes", read);
+                                if (read > 0) {
+                                    dst.flip();
+                                    // inspect the byte to make sure its a valid type
+                                    if (showfirsttag) {
+                                        showfirsttag = false;
+                                        dst.mark();
+                                        log.debug("Tag type: {}", (dst.get() & 31));
+                                        dst.reset();
+                                    }
+                                    wrote = fileChannel.write(dst);
+                                    log.trace("Wrote: {} bytes", wrote);
+                                    bytesTransferred += wrote;
                                 }
-                                wrote = fileChannel.write(dst);
-                                log.trace("Wrote: {} bytes", wrote);
-                                bytesTransferred += wrote;
-                            }
-                            dst.compact();
-                        } while (read > 0);
+                                dst.compact();
+                            } while (read > 0);
+                        }
                         dst.clear();
-                        prevChannel.close();
                         // remove the previous flv
                         Files.deleteIfExists(prevFlv);
                         log.debug("Previous FLV bytes written: {} final position: {}", (bytesWritten + bytesTransferred), fileChannel.position());

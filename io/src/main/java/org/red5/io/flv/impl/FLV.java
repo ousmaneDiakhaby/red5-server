@@ -94,8 +94,7 @@ public class FLV implements IFLV {
         this.file = file;
         this.generateMetadata = generateMetadata;
         if (!generateMetadata) {
-            try {
-                FLVReader reader = new FLVReader(this.file);
+            try (FLVReader reader = new FLVReader(this.file)) {
                 ITag tag = null;
                 int count = 0;
                 while (reader.hasMoreTags() && (++count < 5)) {
@@ -107,7 +106,6 @@ public class FLV implements IFLV {
                         metaData = metaService.readMetaData(tag.getBody());
                     }
                 }
-                reader.close();
             } catch (Exception e) {
                 log.error("An error occured looking for metadata", e);
             }
