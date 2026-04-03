@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.List;
 
 import org.apache.mina.core.buffer.IoBuffer;
 import org.red5.codec.AudioCodec;
@@ -48,6 +49,8 @@ public class MediaBunnyStreamListener implements IStreamListener {
     private static final long VIDEO_FRAGMENT_TARGET = 9000;
 
     private static final long AUDIO_FRAGMENT_TARGET = 4800;
+
+    private static final List<Integer> EXTENDED_PROFILE_IDCS = List.of(100, 110, 122, 244, 44, 83, 86, 118, 128, 134, 138, 139);
 
     private static final int AUDIO_JITTER_FRAMES = 6;
 
@@ -457,7 +460,7 @@ public class MediaBunnyStreamListener implements IStreamListener {
         byte[] slConfig = buildDescriptor((byte) 0x06, new byte[] { 0x02 });
 
         byte[] esPayload = concat(new byte[] { 0x00, 0x02, 0x00 }, // ES_ID=2, flags=0
-                decoderConfig, slConfig);
+            decoderConfig, slConfig);
         byte[] esDescriptor = buildDescriptor((byte) 0x03, esPayload);
 
         byte[] fullBox = concat(new byte[] { 0, 0, 0, 0 }, esDescriptor);
@@ -481,10 +484,10 @@ public class MediaBunnyStreamListener implements IStreamListener {
 
     private static byte[] buildDecoderConfig(byte[] decSpecific) {
         byte[] header = new byte[] { 0x40, // object type indication (MPEG-4 Audio)
-                0x15, // stream type (audio) << 2 | 1
-                0x00, 0x00, 0x00, // buffer size DB
-                0x00, 0x00, 0x00, 0x00, // max bitrate
-                0x00, 0x00, 0x00, 0x00 // avg bitrate
+            0x15, // stream type (audio) << 2 | 1
+            0x00, 0x00, 0x00, // buffer size DB
+            0x00, 0x00, 0x00, 0x00, // max bitrate
+            0x00, 0x00, 0x00, 0x00 // avg bitrate
         };
         byte[] payload = concat(header, decSpecific);
         return buildDescriptor((byte) 0x04, payload);
@@ -806,7 +809,7 @@ public class MediaBunnyStreamListener implements IStreamListener {
     }
 
     private static boolean isExtendedProfile(int profileIdc) {
-        return profileIdc == 100 || profileIdc == 110 || profileIdc == 122 || profileIdc == 244 || profileIdc == 44 || profileIdc == 83 || profileIdc == 86 || profileIdc == 118 || profileIdc == 128 || profileIdc == 138 || profileIdc == 139 || profileIdc == 134;
+        return EXTENDED_PROFILE_IDCS.contains(profileIdc);
     }
 
     private static void skipScalingList(BitReader reader, int size) {
