@@ -264,12 +264,6 @@ public class Scope extends BasicScope implements IScope, IScopeStatistics, Scope
             if (hasHandler() && !getHandler().join(client, this)) {
                 return false;
             }
-            // checking the connection again? why?
-            if (!conn.isConnected()) {
-                log.warn("Connection is not connected");
-                // timeout while connecting client
-                return false;
-            }
             // add the client and event listener
             if (clients.contains(client) || (clients.add(client) && addEventListener(conn))) {
                 log.debug("Added client id {}", client.getId());
