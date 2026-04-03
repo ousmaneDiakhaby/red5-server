@@ -1,11 +1,11 @@
 package org.red5.server.net.rtmp.codec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.red5.server.net.rtmp.RTMPUtils;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
@@ -14,17 +14,17 @@ import org.red5.server.net.rtmp.message.Header;
  * Tests for RTMP extended timestamp encoding and decoding.
  * These tests verify FFmpeg/libav compatibility for extended timestamp handling.
  */
-public class RTMPExtendedTimestampTest implements Constants {
+class RTMPExtendedTimestampTest implements Constants {
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
     }
 
     /**
      * Test encoding Type 0 header with extended timestamp
      */
     @Test
-    public void testEncodeType0ExtendedTimestamp() {
+    void testEncodeType0ExtendedTimestamp() {
         Header header = new Header();
         header.setChannelId(4);
         header.setTimerBase(MEDIUM_INT_MAX + 5000);
@@ -61,26 +61,26 @@ public class RTMPExtendedTimestampTest implements Constants {
 
         // Verify header byte
         int firstByte = buf.get() & 0xFF;
-        assertEquals("Header type should be 0", 0, (firstByte >> 6) & 0x03);
-        assertEquals("Channel ID should be 4", 4, firstByte & 0x3F);
+        assertEquals(0, (firstByte >> 6) & 0x03, "Header type should be 0");
+        assertEquals(4, firstByte & 0x3F, "Channel ID should be 4");
 
         // Verify timestamp field is MEDIUM_INT_MAX
         int ts = RTMPUtils.readUnsignedMediumInt(buf);
-        assertEquals("Timestamp field should be MEDIUM_INT_MAX", MEDIUM_INT_MAX, ts);
+        assertEquals(MEDIUM_INT_MAX, ts, "Timestamp field should be MEDIUM_INT_MAX");
 
         // Skip size (3 bytes), data type (1 byte), stream ID (4 bytes)
         buf.skip(8);
 
         // Verify extended timestamp
         int extTs = buf.getInt();
-        assertEquals("Extended timestamp should match original", MEDIUM_INT_MAX + 5000, extTs);
+        assertEquals(MEDIUM_INT_MAX + 5000, extTs, "Extended timestamp should match original");
     }
 
     /**
      * Test encoding Type 1 header with extended timestamp delta
      */
     @Test
-    public void testEncodeType1ExtendedTimestampDelta() {
+    void testEncodeType1ExtendedTimestampDelta() {
         Header header = new Header();
         header.setChannelId(4);
         header.setTimerDelta(MEDIUM_INT_MAX + 3000);
@@ -112,25 +112,25 @@ public class RTMPExtendedTimestampTest implements Constants {
 
         // Verify header byte
         int firstByte = buf.get() & 0xFF;
-        assertEquals("Header type should be 1", 1, (firstByte >> 6) & 0x03);
+        assertEquals(1, (firstByte >> 6) & 0x03, "Header type should be 1");
 
         // Verify delta field is MEDIUM_INT_MAX
         int delta = RTMPUtils.readUnsignedMediumInt(buf);
-        assertEquals("Delta field should be MEDIUM_INT_MAX", MEDIUM_INT_MAX, delta);
+        assertEquals(MEDIUM_INT_MAX, delta, "Delta field should be MEDIUM_INT_MAX");
 
         // Skip size (3 bytes), data type (1 byte)
         buf.skip(4);
 
         // Verify extended timestamp
         int extTs = buf.getInt();
-        assertEquals("Extended timestamp should match delta", MEDIUM_INT_MAX + 3000, extTs);
+        assertEquals(MEDIUM_INT_MAX + 3000, extTs, "Extended timestamp should match delta");
     }
 
     /**
      * Test encoding Type 3 header with extended timestamp (continuation chunk)
      */
     @Test
-    public void testEncodeType3ExtendedTimestampFromType0Origin() {
+    void testEncodeType3ExtendedTimestampFromType0Origin() {
         // lastHeader from Type 0 with extended timestamp
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -160,18 +160,18 @@ public class RTMPExtendedTimestampTest implements Constants {
 
         // Verify header byte
         int firstByte = buf.get() & 0xFF;
-        assertEquals("Header type should be 3", 3, (firstByte >> 6) & 0x03);
+        assertEquals(3, (firstByte >> 6) & 0x03, "Header type should be 3");
 
         // Verify extended timestamp
         int extTs = buf.getInt();
-        assertEquals("Extended timestamp should be full timer (Type 0 origin)", MEDIUM_INT_MAX + 5000, extTs);
+        assertEquals(MEDIUM_INT_MAX + 5000, extTs, "Extended timestamp should be full timer (Type 0 origin)");
     }
 
     /**
      * Test encoding Type 3 header with extended timestamp from Type 1/2 origin
      */
     @Test
-    public void testEncodeType3ExtendedTimestampFromType1Origin() {
+    void testEncodeType3ExtendedTimestampFromType1Origin() {
         // lastHeader from Type 1/2 with extended delta
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -201,18 +201,18 @@ public class RTMPExtendedTimestampTest implements Constants {
 
         // Verify header byte
         int firstByte = buf.get() & 0xFF;
-        assertEquals("Header type should be 3", 3, (firstByte >> 6) & 0x03);
+        assertEquals(3, (firstByte >> 6) & 0x03, "Header type should be 3");
 
         // Verify extended timestamp
         int extTs = buf.getInt();
-        assertEquals("Extended timestamp should be delta (Type 1/2 origin)", MEDIUM_INT_MAX + 3000, extTs);
+        assertEquals(MEDIUM_INT_MAX + 3000, extTs, "Extended timestamp should be delta (Type 1/2 origin)");
     }
 
     /**
      * Test that Type 3 without extended timestamp doesn't write extra bytes
      */
     @Test
-    public void testEncodeType3NoExtendedTimestamp() {
+    void testEncodeType3NoExtendedTimestamp() {
         // lastHeader without extended timestamp
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -230,19 +230,19 @@ public class RTMPExtendedTimestampTest implements Constants {
         buf.flip();
 
         // Should only have 1 byte (the header byte)
-        assertEquals("Type 3 without extended should be 1 byte", 1, buf.remaining());
+        assertEquals(1, buf.remaining(), "Type 3 without extended should be 1 byte");
 
         // Verify header byte
         int firstByte = buf.get() & 0xFF;
-        assertEquals("Header type should be 3", 3, (firstByte >> 6) & 0x03);
-        assertEquals("Channel ID should be 4", 4, firstByte & 0x3F);
+        assertEquals(3, (firstByte >> 6) & 0x03, "Header type should be 3");
+        assertEquals(4, firstByte & 0x3F, "Channel ID should be 4");
     }
 
     /**
      * Test extended timestamp transition from extended to non-extended
      */
     @Test
-    public void testExtendedTimestampTransition() {
+    void testExtendedTimestampTransition() {
         // First header: extended
         Header header1 = new Header();
         header1.setChannelId(4);
@@ -262,15 +262,15 @@ public class RTMPExtendedTimestampTest implements Constants {
             header2.setExtended(false);
         }
 
-        assertTrue("Header 1 should have extended flag", header1.isExtended());
-        assertTrue("Header 2 should NOT have extended flag after reset", !header2.isExtended());
+        assertTrue(header1.isExtended(), "Header 1 should have extended flag");
+        assertTrue(!header2.isExtended(), "Header 2 should NOT have extended flag after reset");
     }
 
     /**
      * Test header byte encoding for different channel IDs
      */
     @Test
-    public void testHeaderByteEncodingChannelIds() {
+    void testHeaderByteEncodingChannelIds() {
         // Channel ID < 64 (1 byte)
         IoBuffer buf1 = IoBuffer.allocate(4);
         RTMPUtils.encodeHeaderByte(buf1, HEADER_NEW, 4);
@@ -296,7 +296,7 @@ public class RTMPExtendedTimestampTest implements Constants {
      * Test medium int read/write consistency
      */
     @Test
-    public void testMediumIntReadWrite() {
+    void testMediumIntReadWrite() {
         IoBuffer buf = IoBuffer.allocate(6);
 
         // Write and read back
@@ -313,7 +313,7 @@ public class RTMPExtendedTimestampTest implements Constants {
      * Test reverse int read/write for stream ID
      */
     @Test
-    public void testReverseIntReadWrite() {
+    void testReverseIntReadWrite() {
         IoBuffer buf = IoBuffer.allocate(8);
 
         RTMPUtils.writeReverseInt(buf, 1);

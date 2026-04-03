@@ -1,11 +1,12 @@
 package org.red5.server.net.rtmp.codec;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.red5.server.net.rtmp.message.Constants;
 import org.red5.server.net.rtmp.message.Header;
 
@@ -19,14 +20,14 @@ import org.red5.server.net.rtmp.message.Header;
  * 3. Chunk size validation accepts full RTMP spec range
  * 4. Encoder/decoder symmetry for extended timestamps
  */
-public class RTMPChunkingTest implements Constants {
+class RTMPChunkingTest implements Constants {
 
     private RTMPProtocolDecoder decoder;
 
     private RTMPProtocolEncoder encoder;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         decoder = new RTMPProtocolDecoder();
         encoder = new RTMPProtocolEncoder();
     }
@@ -35,7 +36,7 @@ public class RTMPChunkingTest implements Constants {
      * Test that extended flag is properly set when timestamp >= MEDIUM_INT_MAX
      */
     @Test
-    public void testExtendedTimestampFlagSet() {
+    void testExtendedTimestampFlagSet() {
         Header header = new Header();
         header.setChannelId(4);
         header.setTimerBase(MEDIUM_INT_MAX + 1000); // Above threshold
@@ -52,15 +53,15 @@ public class RTMPChunkingTest implements Constants {
             header.setExtended(false);
         }
 
-        assertTrue("Extended flag should be true when timestamp >= MEDIUM_INT_MAX", header.isExtended());
-        assertEquals("Timer should be preserved", MEDIUM_INT_MAX + 1000, header.getTimer());
+        assertTrue(header.isExtended(), "Extended flag should be true when timestamp >= MEDIUM_INT_MAX");
+        assertEquals(MEDIUM_INT_MAX + 1000, header.getTimer(), "Timer should be preserved");
     }
 
     /**
      * Test that extended flag is properly reset when timestamp < MEDIUM_INT_MAX
      */
     @Test
-    public void testExtendedTimestampFlagReset() {
+    void testExtendedTimestampFlagReset() {
         Header header = new Header();
         header.setChannelId(4);
         header.setTimerBase(1000); // Below threshold
@@ -78,14 +79,14 @@ public class RTMPChunkingTest implements Constants {
             header.setExtended(false);
         }
 
-        assertFalse("Extended flag should be false when timestamp < MEDIUM_INT_MAX", header.isExtended());
+        assertFalse(header.isExtended(), "Extended flag should be false when timestamp < MEDIUM_INT_MAX");
     }
 
     /**
      * Test Type 1 header extended flag reset when delta < MEDIUM_INT_MAX
      */
     @Test
-    public void testType1ExtendedFlagReset() {
+    void testType1ExtendedFlagReset() {
         // Create a lastHeader with extended timestamp
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -110,7 +111,7 @@ public class RTMPChunkingTest implements Constants {
             header.setExtended(false);
         }
 
-        assertFalse("Extended flag should be reset when delta < MEDIUM_INT_MAX", header.isExtended());
+        assertFalse(header.isExtended(), "Extended flag should be reset when delta < MEDIUM_INT_MAX");
     }
 
     /**
@@ -118,7 +119,7 @@ public class RTMPChunkingTest implements Constants {
      * This tests the FFmpeg/libav compatibility fix
      */
     @Test
-    public void testType3ExtendedTimestampValueBasedDetection() {
+    void testType3ExtendedTimestampValueBasedDetection() {
         // Scenario: lastHeader has extended timestamp but flag wasn't properly set
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -134,14 +135,14 @@ public class RTMPChunkingTest implements Constants {
             hasExtendedTimestamp = (lastTimerDelta >= MEDIUM_INT_MAX) || (lastTimerDelta == 0 && lastTimerBase >= MEDIUM_INT_MAX);
         }
 
-        assertTrue("Value-based detection should find extended timestamp", hasExtendedTimestamp);
+        assertTrue(hasExtendedTimestamp, "Value-based detection should find extended timestamp");
     }
 
     /**
      * Test Type 3 extended timestamp detection when delta is extended
      */
     @Test
-    public void testType3ExtendedTimestampDeltaDetection() {
+    void testType3ExtendedTimestampDeltaDetection() {
         // Scenario: lastHeader has extended delta
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -157,14 +158,14 @@ public class RTMPChunkingTest implements Constants {
             hasExtendedTimestamp = (lastTimerDelta >= MEDIUM_INT_MAX) || (lastTimerDelta == 0 && lastTimerBase >= MEDIUM_INT_MAX);
         }
 
-        assertTrue("Should detect extended timestamp from delta", hasExtendedTimestamp);
+        assertTrue(hasExtendedTimestamp, "Should detect extended timestamp from delta");
     }
 
     /**
      * Test chunk size validation accepts full RTMP spec range
      */
     @Test
-    public void testChunkSizeValidationFullRange() {
+    void testChunkSizeValidationFullRange() {
         RTMP rtmp = new RTMP();
 
         // Test minimum valid chunk size
@@ -191,26 +192,26 @@ public class RTMPChunkingTest implements Constants {
     /**
      * Test chunk size validation rejects invalid values
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void testChunkSizeValidationRejectsZero() {
+    @Test
+    void testChunkSizeValidationRejectsZero() {
         RTMP rtmp = new RTMP();
-        rtmp.setReadChunkSize(0);
+        assertThrows(IllegalArgumentException.class, () -> rtmp.setReadChunkSize(0));
     }
 
     /**
      * Test chunk size validation rejects values above RTMP spec max
      */
-    @Test(expected = IllegalArgumentException.class)
-    public void testChunkSizeValidationRejectsAboveMax() {
+    @Test
+    void testChunkSizeValidationRejectsAboveMax() {
         RTMP rtmp = new RTMP();
-        rtmp.setReadChunkSize(16777216); // MEDIUM_INT_MAX + 1
+        assertThrows(IllegalArgumentException.class, () -> rtmp.setReadChunkSize(16777216)); // MEDIUM_INT_MAX + 1
     }
 
     /**
      * Test write chunk size validation
      */
     @Test
-    public void testWriteChunkSizeValidation() {
+    void testWriteChunkSizeValidation() {
         RTMP rtmp = new RTMP();
 
         // Test various valid values
@@ -228,7 +229,7 @@ public class RTMPChunkingTest implements Constants {
      * Test encoder Type 3 extended timestamp value calculation for Type 0 origin
      */
     @Test
-    public void testEncoderType3ExtendedTimestampFromType0() {
+    void testEncoderType3ExtendedTimestampFromType0() {
         // Simulate Type 0 header with extended timestamp
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -246,14 +247,14 @@ public class RTMPChunkingTest implements Constants {
             extendedTimestamp = lastHeader.getTimer();
         }
 
-        assertEquals("Extended timestamp should be full timer for Type 0", MEDIUM_INT_MAX + 5000, extendedTimestamp);
+        assertEquals(MEDIUM_INT_MAX + 5000, extendedTimestamp, "Extended timestamp should be full timer for Type 0");
     }
 
     /**
      * Test encoder Type 3 extended timestamp value calculation for Type 1/2 origin
      */
     @Test
-    public void testEncoderType3ExtendedTimestampFromType1() {
+    void testEncoderType3ExtendedTimestampFromType1() {
         // Simulate Type 1/2 header with extended delta
         Header lastHeader = new Header();
         lastHeader.setChannelId(4);
@@ -271,26 +272,26 @@ public class RTMPChunkingTest implements Constants {
             extendedTimestamp = lastHeader.getTimer();
         }
 
-        assertEquals("Extended timestamp should be delta for Type 1/2", MEDIUM_INT_MAX + 3000, extendedTimestamp);
+        assertEquals(MEDIUM_INT_MAX + 3000, extendedTimestamp, "Extended timestamp should be delta for Type 1/2");
     }
 
     /**
      * Test Header timer calculation
      */
     @Test
-    public void testHeaderTimerCalculation() {
+    void testHeaderTimerCalculation() {
         Header header = new Header();
         header.setTimerBase(1000);
         header.setTimerDelta(500);
 
-        assertEquals("Timer should be base + delta", 1500, header.getTimer());
+        assertEquals(1500, header.getTimer(), "Timer should be base + delta");
     }
 
     /**
      * Test Header clone preserves all fields including extended flag
      */
     @Test
-    public void testHeaderClonePreservesExtended() {
+    void testHeaderClonePreservesExtended() {
         Header original = new Header();
         original.setChannelId(4);
         original.setTimerBase(MEDIUM_INT_MAX + 1000);
@@ -308,45 +309,45 @@ public class RTMPChunkingTest implements Constants {
         assertEquals(original.getSize(), cloned.getSize());
         assertEquals(original.getDataType(), cloned.getDataType());
         assertEquals(original.getStreamId(), cloned.getStreamId());
-        assertEquals("Extended flag should be preserved in clone", original.isExtended(), cloned.isExtended());
+        assertEquals(original.isExtended(), cloned.isExtended(), "Extended flag should be preserved in clone");
     }
 
     /**
      * Test MEDIUM_INT_MAX constant value
      */
     @Test
-    public void testMediumIntMaxValue() {
+    void testMediumIntMaxValue() {
         // MEDIUM_INT_MAX should be 0xFFFFFF (16777215)
-        assertEquals("MEDIUM_INT_MAX should be 16777215", 16777215, MEDIUM_INT_MAX);
-        assertEquals("MEDIUM_INT_MAX should be 0xFFFFFF", 0xFFFFFF, MEDIUM_INT_MAX);
+        assertEquals(16777215, MEDIUM_INT_MAX, "MEDIUM_INT_MAX should be 16777215");
+        assertEquals(0xFFFFFF, MEDIUM_INT_MAX, "MEDIUM_INT_MAX should be 0xFFFFFF");
     }
 
     /**
      * Test extended timestamp boundary - exactly at MEDIUM_INT_MAX
      */
     @Test
-    public void testExtendedTimestampBoundary() {
+    void testExtendedTimestampBoundary() {
         Header header = new Header();
         header.setTimerBase(MEDIUM_INT_MAX);
         header.setTimerDelta(0);
 
         // At exactly MEDIUM_INT_MAX, should be extended
         boolean isExtended = header.getTimerBase() >= MEDIUM_INT_MAX;
-        assertTrue("Timestamp at exactly MEDIUM_INT_MAX should trigger extended", isExtended);
+        assertTrue(isExtended, "Timestamp at exactly MEDIUM_INT_MAX should trigger extended");
     }
 
     /**
      * Test extended timestamp just below boundary
      */
     @Test
-    public void testExtendedTimestampJustBelowBoundary() {
+    void testExtendedTimestampJustBelowBoundary() {
         Header header = new Header();
         header.setTimerBase(MEDIUM_INT_MAX - 1);
         header.setTimerDelta(0);
 
         // Just below MEDIUM_INT_MAX, should not be extended
         boolean isExtended = header.getTimerBase() >= MEDIUM_INT_MAX;
-        assertFalse("Timestamp just below MEDIUM_INT_MAX should not trigger extended", isExtended);
+        assertFalse(isExtended, "Timestamp just below MEDIUM_INT_MAX should not trigger extended");
     }
 
     /**
@@ -355,43 +356,38 @@ public class RTMPChunkingTest implements Constants {
      * but should still be treated as large positive values for extended timestamp detection
      */
     @Test
-    public void testUnsignedTimestampComparison() {
+    void testUnsignedTimestampComparison() {
         // Value just above Integer.MAX_VALUE (2147483648)
         int largeTimestamp = Integer.MIN_VALUE; // This is 2^31 as unsigned
 
         // Signed comparison would be false (negative < positive)
-        assertFalse("Signed comparison incorrectly treats large unsigned as small", largeTimestamp >= MEDIUM_INT_MAX);
-
+        assertFalse(largeTimestamp >= MEDIUM_INT_MAX, "Signed comparison incorrectly treats large unsigned as small");
         // Unsigned comparison should be true (2^31 > 0xFFFFFF)
-        assertTrue("Unsigned comparison should detect large timestamp", Integer.compareUnsigned(largeTimestamp, MEDIUM_INT_MAX) >= 0);
+        assertTrue(Integer.compareUnsigned(largeTimestamp, MEDIUM_INT_MAX) >= 0, "Unsigned comparison should detect large timestamp");
     }
 
     /**
      * Test unsigned comparison with various boundary values
      */
     @Test
-    public void testUnsignedComparisonBoundaries() {
+    void testUnsignedComparisonBoundaries() {
         // Integer.MAX_VALUE (2^31 - 1) - still positive
-        assertTrue("Integer.MAX_VALUE should trigger extended", Integer.compareUnsigned(Integer.MAX_VALUE, MEDIUM_INT_MAX) >= 0);
-
+        assertTrue(Integer.compareUnsigned(Integer.MAX_VALUE, MEDIUM_INT_MAX) >= 0, "Integer.MAX_VALUE should trigger extended");
         // Integer.MIN_VALUE (2^31 as unsigned) - negative in Java
-        assertTrue("Integer.MIN_VALUE (unsigned 2^31) should trigger extended", Integer.compareUnsigned(Integer.MIN_VALUE, MEDIUM_INT_MAX) >= 0);
-
+        assertTrue(Integer.compareUnsigned(Integer.MIN_VALUE, MEDIUM_INT_MAX) >= 0, "Integer.MIN_VALUE (unsigned 2^31) should trigger extended");
         // -1 (0xFFFFFFFF as unsigned) - maximum unsigned value
-        assertTrue("-1 (unsigned 0xFFFFFFFF) should trigger extended", Integer.compareUnsigned(-1, MEDIUM_INT_MAX) >= 0);
-
+        assertTrue(Integer.compareUnsigned(-1, MEDIUM_INT_MAX) >= 0, "-1 (unsigned 0xFFFFFFFF) should trigger extended");
         // MEDIUM_INT_MAX exactly
-        assertTrue("MEDIUM_INT_MAX exactly should trigger extended", Integer.compareUnsigned(MEDIUM_INT_MAX, MEDIUM_INT_MAX) >= 0);
-
+        assertTrue(Integer.compareUnsigned(MEDIUM_INT_MAX, MEDIUM_INT_MAX) >= 0, "MEDIUM_INT_MAX exactly should trigger extended");
         // Just below MEDIUM_INT_MAX
-        assertFalse("Just below MEDIUM_INT_MAX should not trigger extended", Integer.compareUnsigned(MEDIUM_INT_MAX - 1, MEDIUM_INT_MAX) >= 0);
+        assertFalse(Integer.compareUnsigned(MEDIUM_INT_MAX - 1, MEDIUM_INT_MAX) >= 0, "Just below MEDIUM_INT_MAX should not trigger extended");
     }
 
     /**
      * Test timestamp delta calculation with large values
      */
     @Test
-    public void testLargeTimestampDelta() {
+    void testLargeTimestampDelta() {
         // Simulating a case where current timestamp is 2^31 + 1000
         // and last timestamp is 2^31 - 1000
         // Integer.MAX_VALUE - 1000 = 2147482647
@@ -403,7 +399,7 @@ public class RTMPChunkingTest implements Constants {
 
         // Calculate delta treating as unsigned
         long delta = Integer.toUnsignedLong(currentTimestamp) - Integer.toUnsignedLong(lastTimestamp);
-        assertEquals("Delta across 2^31 boundary should be 2001", 2001L, delta);
+        assertEquals(2001L, delta, "Delta across 2^31 boundary should be 2001");
     }
 
     /**
@@ -411,7 +407,7 @@ public class RTMPChunkingTest implements Constants {
      * When source restarts, timestamps jump backward and should be detected
      */
     @Test
-    public void testTimestampDiscontinuityDetection() {
+    void testTimestampDiscontinuityDetection() {
         // Scenario: source was at timestamp 2147445785, then restarts to 11797
         int lastRawTimestamp = 2147445785;
         int newRawTimestamp = 11797;
@@ -422,8 +418,7 @@ public class RTMPChunkingTest implements Constants {
         // Check if this is a discontinuity (backward jump > 1 second)
         boolean isDiscontinuity = unsignedLast > unsignedCurrent && (unsignedLast - unsignedCurrent) > 1000L;
 
-        assertTrue("Should detect timestamp discontinuity", isDiscontinuity);
-
+        assertTrue(isDiscontinuity, "Should detect timestamp discontinuity");
         // Calculate offset for compensation
         long offset = unsignedLast + 1; // Continue from last timestamp
 
@@ -431,17 +426,16 @@ public class RTMPChunkingTest implements Constants {
         long adjustedTimestamp = unsignedCurrent + offset;
 
         // Adjusted timestamp should be greater than last
-        assertTrue("Adjusted timestamp should be greater than last", adjustedTimestamp > unsignedLast);
-
+        assertTrue(adjustedTimestamp > unsignedLast, "Adjusted timestamp should be greater than last");
         // And the difference should be small (the new timestamp + 1)
-        assertEquals("Adjusted timestamp should be last + 1 + new", unsignedLast + 1 + unsignedCurrent, adjustedTimestamp);
+        assertEquals(unsignedLast + 1 + unsignedCurrent, adjustedTimestamp, "Adjusted timestamp should be last + 1 + new");
     }
 
     /**
      * Test that normal timestamp progression doesn't trigger discontinuity detection
      */
     @Test
-    public void testNormalTimestampProgressionNotDiscontinuity() {
+    void testNormalTimestampProgressionNotDiscontinuity() {
         // Normal progression: small increases
         int lastRawTimestamp = 1000;
         int newRawTimestamp = 1033; // 33ms later (typical frame interval)
@@ -452,14 +446,14 @@ public class RTMPChunkingTest implements Constants {
         // Should NOT be a discontinuity
         boolean isDiscontinuity = unsignedLast > unsignedCurrent && (unsignedLast - unsignedCurrent) > 1000L;
 
-        assertFalse("Normal progression should not be discontinuity", isDiscontinuity);
+        assertFalse(isDiscontinuity, "Normal progression should not be discontinuity");
     }
 
     /**
      * Test that small backward jitter doesn't trigger discontinuity detection
      */
     @Test
-    public void testSmallBackwardJitterNotDiscontinuity() {
+    void testSmallBackwardJitterNotDiscontinuity() {
         // Small backward jump (could be network reordering)
         int lastRawTimestamp = 1100;
         int newRawTimestamp = 1050; // 50ms backward
@@ -470,29 +464,29 @@ public class RTMPChunkingTest implements Constants {
         // Should NOT be a discontinuity (only 50ms backward, threshold is 1000ms)
         boolean isDiscontinuity = unsignedLast > unsignedCurrent && (unsignedLast - unsignedCurrent) > 1000L;
 
-        assertFalse("Small backward jitter should not be discontinuity", isDiscontinuity);
+        assertFalse(isDiscontinuity, "Small backward jitter should not be discontinuity");
     }
 
     /**
      * Test RTMP timestamp offset tracking
      */
     @Test
-    public void testRtmpTimestampOffsetTracking() {
+    void testRtmpTimestampOffsetTracking() {
         RTMP rtmp = new RTMP();
 
         // Initially offset should be 0
-        assertEquals("Initial offset should be 0", 0L, rtmp.getTimestampOffset(4));
+        assertEquals(0L, rtmp.getTimestampOffset(4), "Initial offset should be 0");
 
         // Set an offset
         rtmp.setTimestampOffset(4, 2147445786L);
-        assertEquals("Offset should be set", 2147445786L, rtmp.getTimestampOffset(4));
+        assertEquals(2147445786L, rtmp.getTimestampOffset(4), "Offset should be set");
 
         // Track last raw timestamp
         rtmp.setLastRawTimestamp(4, 11797);
-        assertEquals("Last raw timestamp should be set", 11797, rtmp.getLastRawTimestamp(4));
+        assertEquals(11797, rtmp.getLastRawTimestamp(4), "Last raw timestamp should be set");
 
         // Different channels should have independent offsets
-        assertEquals("Different channel should have 0 offset", 0L, rtmp.getTimestampOffset(5));
+        assertEquals(0L, rtmp.getTimestampOffset(5), "Different channel should have 0 offset");
     }
 
     /**
@@ -501,7 +495,7 @@ public class RTMPChunkingTest implements Constants {
      * could exceed safe bounds for int arithmetic in PlayEngine.
      */
     @Test
-    public void testTimestampOffsetCappingForOverflowPrevention() {
+    void testTimestampOffsetCappingForOverflowPrevention() {
         // Scenario: Videon with timestamps at 2147445785 (near Integer.MAX_VALUE) restarts
         int lastRawTimestamp = 2147445785;
         int newRawTimestamp = 11797;
@@ -512,31 +506,27 @@ public class RTMPChunkingTest implements Constants {
 
         // Verify this is a discontinuity
         boolean isDiscontinuity = unsignedLast > unsignedCurrent && (unsignedLast - unsignedCurrent) > 1000L;
-        assertTrue("Should detect discontinuity", isDiscontinuity);
-
+        assertTrue(isDiscontinuity, "Should detect discontinuity");
         // Calculate raw offset (as decoder would)
         long newOffset = currentOffset + unsignedLast + 1;
 
         // Without capping, offset would be ~2.1 billion - exceeds the safe threshold
         final long MAX_SAFE_OFFSET = 0x40000000L; // ~1 billion, leaves headroom for int operations
-        assertTrue("Uncapped offset should exceed MAX_SAFE_OFFSET", newOffset > MAX_SAFE_OFFSET);
-
+        assertTrue(newOffset > MAX_SAFE_OFFSET, "Uncapped offset should exceed MAX_SAFE_OFFSET");
         // Cap to MAX_SAFE_OFFSET (as decoder does)
         if (newOffset > MAX_SAFE_OFFSET) {
             newOffset = MAX_SAFE_OFFSET;
         }
 
         // Verify capped offset is safe
-        assertTrue("Capped offset should be <= MAX_SAFE_OFFSET", newOffset <= MAX_SAFE_OFFSET);
-
+        assertTrue(newOffset <= MAX_SAFE_OFFSET, "Capped offset should be <= MAX_SAFE_OFFSET");
         // Apply offset to new timestamp
         long adjustedTimestamp = unsignedCurrent + newOffset;
 
         // The adjusted timestamp should be safely within int range
-        assertTrue("Adjusted timestamp should be less than Integer.MAX_VALUE", adjustedTimestamp < Integer.MAX_VALUE);
-
+        assertTrue(adjustedTimestamp < Integer.MAX_VALUE, "Adjusted timestamp should be less than Integer.MAX_VALUE");
         // When cast to int, it should remain positive (no overflow)
         int adjustedInt = (int) (adjustedTimestamp & 0xFFFFFFFFL);
-        assertTrue("Adjusted timestamp as int should be positive", adjustedInt > 0);
+        assertTrue(adjustedInt > 0, "Adjusted timestamp as int should be positive");
     }
 }

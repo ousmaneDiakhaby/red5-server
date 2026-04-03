@@ -1,18 +1,18 @@
 package org.red5.server.net.rtmp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Tests for RTMPUtils utility methods.
  */
-public class TestRTMPUtils {
+class TestRTMPUtils {
 
     @Test
-    public void testWriteMediumInt() {
+    void testWriteMediumInt() {
         IoBuffer buf = IoBuffer.allocate(6);
 
         // Write zero
@@ -28,7 +28,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testReadUnsignedMediumInt() {
+    void testReadUnsignedMediumInt() {
         IoBuffer buf = IoBuffer.allocate(9);
 
         // Test various values
@@ -44,7 +44,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testReadMediumInt() {
+    void testReadMediumInt() {
         IoBuffer buf = IoBuffer.allocate(6);
 
         // Write medium ints - readMediumInt handles sign extension
@@ -57,11 +57,11 @@ public class TestRTMPUtils {
         assertEquals(0x7FFFFF, RTMPUtils.readMediumInt(buf));
         // 0x800000 sign-extended as 24-bit becomes negative
         int signExtended = RTMPUtils.readMediumInt(buf);
-        assertTrue("High bit value should be sign extended", signExtended < 0);
+        assertTrue(signExtended < 0, "High bit value should be sign extended");
     }
 
     @Test
-    public void testCompareTimestamps() {
+    void testCompareTimestamps() {
         // Equal timestamps
         assertEquals(0, RTMPUtils.compareTimestamps(1000, 1000));
 
@@ -79,7 +79,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testDiffTimestamps() {
+    void testDiffTimestamps() {
         // Same timestamps
         assertEquals(0L, RTMPUtils.diffTimestamps(1000, 1000));
 
@@ -98,7 +98,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testReverseIntReadWrite() {
+    void testReverseIntReadWrite() {
         IoBuffer buf = IoBuffer.allocate(12);
 
         // Write various values (little-endian / reverse order)
@@ -115,7 +115,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testEncodeHeaderByte() {
+    void testEncodeHeaderByte() {
         // Channel ID < 64 (1 byte encoding)
         IoBuffer buf1 = IoBuffer.allocate(4);
         RTMPUtils.encodeHeaderByte(buf1, (byte) 0, 4);
@@ -141,7 +141,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testDecodeHeaderSize() {
+    void testDecodeHeaderSize() {
         // Test header size decoding from first byte
         // Header size is encoded in top 2 bits: 0=full(12), 1=same_source(8), 2=timer_change(4), 3=continue(1)
 
@@ -159,7 +159,7 @@ public class TestRTMPUtils {
     }
 
     @Test
-    public void testMediumIntBoundaryValues() {
+    void testMediumIntBoundaryValues() {
         IoBuffer buf = IoBuffer.allocate(12);
 
         // Boundary values

@@ -1,17 +1,17 @@
 package org.red5.server.net.rtmp.codec;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
 import java.util.Random;
 
 import org.apache.mina.core.buffer.IoBuffer;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.red5.server.net.protocol.RTMPDecodeState;
 import org.red5.server.net.rtmp.RTMPConnection;
 import org.red5.server.net.rtmp.event.AudioData;
@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * 2. Edge server decodes the chunked stream
  * 3. Both sides must maintain chunk stream alignment
  */
-public class OriginEdgeChunkTest implements Constants {
+class OriginEdgeChunkTest implements Constants {
 
     private static final Logger log = LoggerFactory.getLogger(OriginEdgeChunkTest.class);
 
@@ -43,8 +43,8 @@ public class OriginEdgeChunkTest implements Constants {
 
     private TestRTMPConnection edgeConn;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         encoder = new RTMPProtocolEncoder();
         decoder = new RTMPProtocolDecoder();
 
@@ -61,7 +61,7 @@ public class OriginEdgeChunkTest implements Constants {
      * This is the core test for origin-to-edge communication.
      */
     @Test
-    public void testLargeVideoPacketChunking() {
+    void testLargeVideoPacketChunking() {
         int packetSize = 169501; // ~165KB, similar to real-world keyframes
         int chunkSize = 1024;
 
@@ -91,8 +91,7 @@ public class OriginEdgeChunkTest implements Constants {
 
         // Encode the packet
         IoBuffer encoded = encoder.encodePacket(packet);
-        assertNotNull("Encoded buffer should not be null", encoded);
-
+        assertNotNull(encoded, "Encoded buffer should not be null");
         log.debug("Encoded {} bytes of video data into {} bytes of chunked data", packetSize, encoded.remaining());
 
         // Calculate expected size: data + headers
@@ -109,20 +108,19 @@ public class OriginEdgeChunkTest implements Constants {
         try {
             List<?> decoded = decoder.decodeBuffer(edgeConn, encoded);
 
-            assertNotNull("Decoded list should not be null", decoded);
-            assertEquals("Should decode exactly one packet", 1, decoded.size());
+            assertNotNull(decoded, "Decoded list should not be null");
+            assertEquals(1, decoded.size(), "Should decode exactly one packet");
 
             Object decodedObj = decoded.get(0);
-            assertNotNull("Decoded object should not be null", decodedObj);
-
+            assertNotNull(decodedObj, "Decoded object should not be null");
             if (decodedObj instanceof Packet) {
                 Packet decodedPacket = (Packet) decodedObj;
                 Header decodedHeader = decodedPacket.getHeader();
 
-                assertEquals("Channel ID should match", 5, decodedHeader.getChannelId());
-                assertEquals("Data type should match", TYPE_VIDEO_DATA, decodedHeader.getDataType());
-                assertEquals("Size should match", packetSize, decodedHeader.getSize());
-                assertEquals("Stream ID should match", 1, decodedHeader.getStreamId().intValue());
+                assertEquals(5, decodedHeader.getChannelId(), "Channel ID should match");
+                assertEquals(TYPE_VIDEO_DATA, decodedHeader.getDataType(), "Data type should match");
+                assertEquals(packetSize, decodedHeader.getSize(), "Size should match");
+                assertEquals(1, decodedHeader.getStreamId().intValue(), "Stream ID should match");
 
                 // Verify the data content
                 IoBuffer decodedData = decodedPacket.getData();
@@ -130,7 +128,7 @@ public class OriginEdgeChunkTest implements Constants {
                     decodedData.flip();
                     byte[] decodedBytes = new byte[decodedData.remaining()];
                     decodedData.get(decodedBytes);
-                    assertArrayEquals("Video data should match", videoData, decodedBytes);
+                    assertArrayEquals(videoData, decodedBytes, "Video data should match");
                 }
             }
 
@@ -145,7 +143,7 @@ public class OriginEdgeChunkTest implements Constants {
      * Test multiple video packets in sequence (simulating a video stream).
      */
     @Test
-    public void testMultipleVideoPacketsInSequence() {
+    void testMultipleVideoPacketsInSequence() {
         int chunkSize = 1024;
         originConn.getState().setWriteChunkSize(chunkSize);
         edgeConn.getState().setReadChunkSize(chunkSize);
@@ -178,7 +176,7 @@ public class OriginEdgeChunkTest implements Constants {
             packet.setMessage(video);
 
             IoBuffer encoded = encoder.encodePacket(packet);
-            assertNotNull("Encoded buffer should not be null for packet " + i, encoded);
+            assertNotNull(encoded, "Encoded buffer should not be null for packet " + i);
 
             // Append to combined buffer (encodePacket already returns buffer in read mode)
             allEncoded.put(encoded);
@@ -192,14 +190,14 @@ public class OriginEdgeChunkTest implements Constants {
         try {
             List<?> decoded = decoder.decodeBuffer(edgeConn, allEncoded);
 
-            assertNotNull("Decoded list should not be null", decoded);
-            assertEquals("Should decode exactly " + packetSizes.length + " packets", packetSizes.length, decoded.size());
+            assertNotNull(decoded, "Decoded list should not be null");
+            assertEquals(packetSizes.length, decoded.size(), "Should decode exactly " + packetSizes.length + " packets");
 
             for (int i = 0; i < decoded.size(); i++) {
                 Object obj = decoded.get(i);
                 if (obj instanceof Packet) {
                     Packet p = (Packet) obj;
-                    assertEquals("Packet " + i + " size should match", packetSizes[i], p.getHeader().getSize());
+                    assertEquals(packetSizes[i], p.getHeader().getSize(), "Packet " + i + " size should match");
                 }
             }
 
@@ -214,7 +212,7 @@ public class OriginEdgeChunkTest implements Constants {
      * Test interleaved audio and video packets (realistic streaming scenario).
      */
     @Test
-    public void testInterleavedAudioVideoPackets() {
+    void testInterleavedAudioVideoPackets() {
         int chunkSize = 1024;
         originConn.getState().setWriteChunkSize(chunkSize);
         edgeConn.getState().setReadChunkSize(chunkSize);
@@ -261,7 +259,7 @@ public class OriginEdgeChunkTest implements Constants {
             }
 
             IoBuffer encoded = encoder.encodePacket(packet);
-            assertNotNull("Encoded buffer should not be null for packet " + i, encoded);
+            assertNotNull(encoded, "Encoded buffer should not be null for packet " + i);
 
             // encodePacket already returns buffer in read mode
             allEncoded.put(encoded);
@@ -275,16 +273,16 @@ public class OriginEdgeChunkTest implements Constants {
         try {
             List<?> decoded = decoder.decodeBuffer(edgeConn, allEncoded);
 
-            assertNotNull("Decoded list should not be null", decoded);
-            assertEquals("Should decode exactly " + packets.length + " packets", packets.length, decoded.size());
+            assertNotNull(decoded, "Decoded list should not be null");
+            assertEquals(packets.length, decoded.size(), "Should decode exactly " + packets.length + " packets");
 
             for (int i = 0; i < decoded.size(); i++) {
                 Object obj = decoded.get(i);
                 if (obj instanceof Packet) {
                     Packet p = (Packet) obj;
-                    assertEquals("Packet " + i + " channel should match", packets[i][0], p.getHeader().getChannelId());
-                    assertEquals("Packet " + i + " type should match", (byte) packets[i][1], p.getHeader().getDataType());
-                    assertEquals("Packet " + i + " size should match", packets[i][2], p.getHeader().getSize());
+                    assertEquals(packets[i][0], p.getHeader().getChannelId(), "Packet " + i + " channel should match");
+                    assertEquals((byte) packets[i][1], p.getHeader().getDataType(), "Packet " + i + " type should match");
+                    assertEquals(packets[i][2], p.getHeader().getSize(), "Packet " + i + " size should match");
                 }
             }
 
@@ -299,7 +297,7 @@ public class OriginEdgeChunkTest implements Constants {
      * Test with extended timestamps (stream running for > 4.6 hours).
      */
     @Test
-    public void testExtendedTimestampPackets() {
+    void testExtendedTimestampPackets() {
         int chunkSize = 1024;
         originConn.getState().setWriteChunkSize(chunkSize);
         edgeConn.getState().setReadChunkSize(chunkSize);
@@ -325,8 +323,7 @@ public class OriginEdgeChunkTest implements Constants {
         packet.setMessage(video);
 
         IoBuffer encoded = encoder.encodePacket(packet);
-        assertNotNull("Encoded buffer should not be null", encoded);
-
+        assertNotNull(encoded, "Encoded buffer should not be null");
         log.debug("Encoded packet with extended timestamp {} ({} hours)", extendedTimestamp, extendedTimestamp / 3600000.0);
 
         // Verify extended timestamp handling
@@ -335,14 +332,14 @@ public class OriginEdgeChunkTest implements Constants {
         try {
             List<?> decoded = decoder.decodeBuffer(edgeConn, encoded);
 
-            assertNotNull("Decoded list should not be null", decoded);
-            assertEquals("Should decode exactly one packet", 1, decoded.size());
+            assertNotNull(decoded, "Decoded list should not be null");
+            assertEquals(1, decoded.size(), "Should decode exactly one packet");
 
             if (decoded.get(0) instanceof Packet) {
                 Packet decodedPacket = (Packet) decoded.get(0);
                 Header decodedHeader = decodedPacket.getHeader();
 
-                assertEquals("Extended timestamp should be preserved", extendedTimestamp, decodedHeader.getTimer());
+                assertEquals(extendedTimestamp, decodedHeader.getTimer(), "Extended timestamp should be preserved");
             }
 
             log.info("Successfully handled extended timestamp packet");
@@ -356,7 +353,7 @@ public class OriginEdgeChunkTest implements Constants {
      * Test partial buffer decoding (simulating network fragmentation).
      */
     @Test
-    public void testPartialBufferDecoding() {
+    void testPartialBufferDecoding() {
         int chunkSize = 1024;
         originConn.getState().setWriteChunkSize(chunkSize);
         edgeConn.getState().setReadChunkSize(chunkSize);
@@ -379,7 +376,7 @@ public class OriginEdgeChunkTest implements Constants {
         packet.setMessage(video);
 
         IoBuffer encoded = encoder.encodePacket(packet);
-        assertNotNull("Encoded buffer should not be null", encoded);
+        assertNotNull(encoded, "Encoded buffer should not be null");
         // encodePacket already returns buffer in read mode
 
         byte[] fullData = new byte[encoded.remaining()];
@@ -417,8 +414,8 @@ public class OriginEdgeChunkTest implements Constants {
         }
 
         // After all fragments, should have decoded the packet
-        assertNotNull("Should have decoded data after all fragments", decoded);
-        assertEquals("Should decode exactly one packet", 1, decoded.size());
+        assertNotNull(decoded, "Should have decoded data after all fragments");
+        assertEquals(1, decoded.size(), "Should decode exactly one packet");
 
         log.info("Successfully decoded packet from {} fragments", fragmentSizes.length);
     }
@@ -486,7 +483,7 @@ public class OriginEdgeChunkTest implements Constants {
      * from origin server to edge client during cluster connection.
      */
     @Test
-    public void testClusterConnectionByteSequence() {
+    void testClusterConnectionByteSequence() {
         // Actual bytes from cluster communication that caused failures
         // ServerBW(ch2) + ClientBW(ch2) + Ping(ch2) + _result Invoke(ch3)
         String hexData = "020000000000040500000000009896804200000000000506009896800242000000000006040000000000000000000000000000000000000000000000000000000300000000008114000000000200075f726573756c74003ff000000000000005030004636f646502001d4e6574436f6e6e656374696f6e2e436f6e6e6563742e53756363657373000b6170706c69636174696f6e0500056c6576656c020006737461747573000b6465736372697074696f6e020015436f6e6e656374696f6e207375636365656465642e000009";
@@ -545,7 +542,7 @@ public class OriginEdgeChunkTest implements Constants {
 
         log.info("Successfully decoded {} messages from cluster byte sequence", totalDecoded);
         // Should decode at least ServerBW, ClientBW, Ping, and _result
-        assertTrue("Should decode at least 4 messages", totalDecoded >= 4);
+        assertTrue(totalDecoded >= 4, "Should decode at least 4 messages");
     }
 
     /**
@@ -562,7 +559,7 @@ public class OriginEdgeChunkTest implements Constants {
      * 3. Both packets should decode correctly
      */
     @Test
-    public void testExtendedToNonExtendedTimestampTransition() {
+    void testExtendedToNonExtendedTimestampTransition() {
         int chunkSize = 1024;
         originConn.getState().setWriteChunkSize(chunkSize);
         edgeConn.getState().setReadChunkSize(chunkSize);
@@ -592,7 +589,7 @@ public class OriginEdgeChunkTest implements Constants {
         packet1.setMessage(video1);
 
         IoBuffer encoded1 = encoder.encodePacket(packet1);
-        assertNotNull("First packet encoding should succeed", encoded1);
+        assertNotNull(encoded1, "First packet encoding should succeed");
         allEncoded.put(encoded1);
 
         log.debug("Encoded packet 1: ts={} (extended), size={}", extendedTimestamp, packet1Size);
@@ -618,7 +615,7 @@ public class OriginEdgeChunkTest implements Constants {
         packet2.setMessage(video2);
 
         IoBuffer encoded2 = encoder.encodePacket(packet2);
-        assertNotNull("Second packet encoding should succeed", encoded2);
+        assertNotNull(encoded2, "Second packet encoding should succeed");
         allEncoded.put(encoded2);
 
         log.debug("Encoded packet 2: ts={} (non-extended), size={}", normalTimestamp, packet2Size);
@@ -629,20 +626,20 @@ public class OriginEdgeChunkTest implements Constants {
         try {
             List<?> decoded = decoder.decodeBuffer(edgeConn, allEncoded);
 
-            assertNotNull("Decoded list should not be null", decoded);
-            assertEquals("Should decode exactly 2 packets", 2, decoded.size());
+            assertNotNull(decoded, "Decoded list should not be null");
+            assertEquals(2, decoded.size(), "Should decode exactly 2 packets");
 
             // Verify first packet
             Packet decodedPacket1 = (Packet) decoded.get(0);
-            assertEquals("First packet timestamp should match", extendedTimestamp, decodedPacket1.getHeader().getTimer());
-            assertEquals("First packet size should match", packet1Size, decodedPacket1.getHeader().getSize());
+            assertEquals(extendedTimestamp, decodedPacket1.getHeader().getTimer(), "First packet timestamp should match");
+            assertEquals(packet1Size, decodedPacket1.getHeader().getSize(), "First packet size should match");
 
             // Verify second packet - this is where the bug would manifest
             // Without the fix, the decoder would try to read 4 extra bytes for Type 3 chunks
             // causing chunk stream desynchronization and "Last header null" errors
             Packet decodedPacket2 = (Packet) decoded.get(1);
-            assertEquals("Second packet size should match", packet2Size, decodedPacket2.getHeader().getSize());
-            assertEquals("Second packet channel should match", 5, decodedPacket2.getHeader().getChannelId());
+            assertEquals(packet2Size, decodedPacket2.getHeader().getSize(), "Second packet size should match");
+            assertEquals(5, decodedPacket2.getHeader().getChannelId(), "Second packet channel should match");
 
             log.info("Successfully decoded extended-to-non-extended timestamp transition on same channel");
 

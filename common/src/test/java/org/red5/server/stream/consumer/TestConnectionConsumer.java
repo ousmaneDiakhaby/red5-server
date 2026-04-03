@@ -1,9 +1,9 @@
 package org.red5.server.stream.consumer;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.red5.server.net.rtmp.Channel;
 import org.red5.server.net.rtmp.RTMPMinaConnection;
 import org.red5.server.net.rtmp.event.VideoData;
@@ -11,7 +11,7 @@ import org.red5.server.stream.message.RTMPMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestConnectionConsumer {
+class TestConnectionConsumer {
 
     private final Logger log = LoggerFactory.getLogger(TestConnectionConsumer.class);
 
@@ -21,8 +21,8 @@ public class TestConnectionConsumer {
 
     private ConnectionConsumer underTest;
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         connection = new RTMPMinaConnection() {
 
             @Override
@@ -37,7 +37,7 @@ public class TestConnectionConsumer {
     }
 
     @Test
-    public void testNegativeTimestampsAreRolledOver() {
+    void testNegativeTimestampsAreRolledOver() {
         log.debug("\n testNegativeTimestampsAreRolledOver");
         // https://www.rfc-editor.org/rfc/rfc1982
         log.debug("\n max: {} min: {} 0:{} -1:{}", Integer.toHexString(Integer.MAX_VALUE), Integer.toHexString(Integer.MIN_VALUE), Integer.toHexString(0), Integer.toHexString(-1));
@@ -56,7 +56,7 @@ public class TestConnectionConsumer {
     }
 
     @Test
-    public void testPositiveTimestampsAreUnaffected() {
+    void testPositiveTimestampsAreUnaffected() {
         log.debug("\n testPositiveTimestampsAreUnaffected");
         VideoData videoData1 = new VideoData();
         videoData1.setTimestamp(0);

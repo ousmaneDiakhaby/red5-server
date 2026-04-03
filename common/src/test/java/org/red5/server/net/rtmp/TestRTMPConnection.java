@@ -1,20 +1,20 @@
 package org.red5.server.net.rtmp;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import static org.red5.server.net.rtmp.RTMPConnection.MAX_RESERVED_STREAMS;
 
-public class TestRTMPConnection {
+class TestRTMPConnection {
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @AfterEach
+    void tearDown() throws Exception {
     }
 
     //	@Test
@@ -74,7 +74,7 @@ public class TestRTMPConnection {
     //	}
 
     @Test
-    public void testGetStreamIdForChannelId() {
+    void testGetStreamIdForChannelId() {
         System.out.println("\n testGetStreamIdForChannelId");
         RTMPConnection conn = new RTMPMinaConnection();
         try {
@@ -90,7 +90,7 @@ public class TestRTMPConnection {
         assertEquals(2.0d, conn.getStreamIdForChannelId(13).doubleValue(), 0d);
         assertEquals(3.0d, conn.getStreamIdForChannelId(14).doubleValue(), 0d);
 
-        System.out.printf("Stream id - cid 0: %f cid 12: %f\n", conn.getStreamIdForChannelId(0).doubleValue(), conn.getStreamIdForChannelId(12).doubleValue());
+        System.out.printf("Channel id - sid 0: %f cid 12: %f\n", conn.getStreamIdForChannelId(0).doubleValue(), conn.getStreamIdForChannelId(12).doubleValue());
     }
 
     //	@Test
@@ -107,7 +107,7 @@ public class TestRTMPConnection {
     //	}
 
     @Test
-    public void testGetChannelIdForStreamId() {
+    void testGetChannelIdForStreamId() {
         System.out.println("\n testGetChannelIdForStreamId");
         RTMPConnection conn = new RTMPMinaConnection();
         try {
@@ -131,7 +131,7 @@ public class TestRTMPConnection {
     }
 
     @Test
-    public void testReserveStreamId() {
+    void testReserveStreamId() {
         System.out.println("\n testReserveStreamId");
         RTMPConnection conn = new RTMPMinaConnection();
         Number streamId = conn.reserveStreamId();
@@ -144,18 +144,20 @@ public class TestRTMPConnection {
         assertFalse(conn.isValidStreamId(streamId));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
-    public void testReserveStreamIdImpossible() {
+    @Test
+    void testReserveStreamIdImpossible() {
         System.out.println("\n testReserveStreamIdImpossible");
-        RTMPConnection conn = new RTMPMinaConnection();
-        for (int i = 0; i < MAX_RESERVED_STREAMS; i++) {
+        assertThrows(IndexOutOfBoundsException.class, () -> {
+            RTMPConnection conn = new RTMPMinaConnection();
+            for (int i = 0; i < MAX_RESERVED_STREAMS; i++) {
+                conn.reserveStreamId();
+            }
             conn.reserveStreamId();
-        }
-        conn.reserveStreamId();
+        });
     }
 
     @Test
-    public void testReserveStreamIdNumber() {
+    void testReserveStreamIdNumber() {
         System.out.println("\n testReserveStreamIdNumber");
         RTMPConnection conn = new RTMPMinaConnection();
         // try integer first
@@ -181,7 +183,7 @@ public class TestRTMPConnection {
     }
 
     @Test
-    public void testReserveStreamIdMixed() {
+    void testReserveStreamIdMixed() {
         System.out.println("\n testReserveStreamIdMixed");
         RTMPConnection conn = new RTMPMinaConnection();
         // try integer
